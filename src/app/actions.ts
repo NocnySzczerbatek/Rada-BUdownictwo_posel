@@ -76,6 +76,19 @@ export async function addComment(reportId: string, nick: string, content: string
   return { success: true };
 }
 
+export async function getComments(reportId: string) {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('created_at', { ascending: true });
+
+  if (error) return [];
+  return data ?? [];
+}
+
 export async function archiveReport(id: string) {
   if (!isSupabaseConfigured) return { error: 'Baza nie jest skonfigurowana.' };
 

@@ -3,8 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 import { X, User, Calendar, Tag, AlertCircle, Clock, CheckCircle2, Loader2, MessageSquare, Send, Archive, ArchiveRestore } from 'lucide-react';
-import { updateReportStatus, addComment, archiveReport, unarchiveReport } from '@/app/actions';
-import { supabase } from '@/lib/supabase';
+import { updateReportStatus, addComment, getComments, archiveReport, unarchiveReport } from '@/app/actions';
 import type { Report, ReportStatus, Comment } from '@/types';
 
 const statusConfig: Record<ReportStatus, { label: string; icon: React.ReactNode; badgeClass: string }> = {
@@ -59,19 +58,15 @@ export function ReportModal({ report, onClose, onStatusChange, onArchive }: Repo
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentNick, setCommentNick] = useState('');
   const [commentContent, setCommentContent] = useState('');
+  const [commentError, setCommentError] = useState('');
   const [isSubmittingComment, startCommentTransition] = useTransition();
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase
-      .from('comments')
-      .select('*')
-      .eq('report_id', report.id)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        setComments((data as Comment[]) ?? []);
-        setLoadingComments(false);
-      });
+    getComments(report.id).then((data) => {
+      setComments(data as Comment[]);
+      setLoadingComments(false);
+    });
   }, [report.id]);
 
   useEffect(() => {
@@ -116,6 +111,7 @@ export function ReportModal({ report, onClose, onStatusChange, onArchive }: Repo
 
   function handleAddComment() {
     if (!commentNick.trim() || !commentContent.trim()) return;
+    setCommentError('');
     const optimistic: Comment = {
       id: crypto.randomUUID(),
       report_id: report.id,
@@ -128,7 +124,11 @@ export function ReportModal({ report, onClose, onStatusChange, onArchive }: Repo
     const content = commentContent;
     setCommentContent('');
     startCommentTransition(async () => {
-      await addComment(report.id, nick, content);
+      const res = await addComment(report.id, nick, content);
+      if (res?.error) {
+        setComments((prev) => prev.filter((c) => c.id !== optimistic.id));
+        setCommentError(res.error);
+      }
     });
   }
 
@@ -314,6 +314,9 @@ export function ReportModal({ report, onClose, onStatusChange, onArchive }: Repo
                   {isSubmittingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>
+              {commentError && (
+                <p className="text-red-400 text-xs">{commentError}</p>
+              )}
             </div>
           </div>
         </div>
