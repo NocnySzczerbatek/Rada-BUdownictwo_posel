@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, useTransition, useEffect } from 'react';
-import { Send, Loader2, CheckCircle, AlertCircle, MapPin } from 'lucide-react';
+import { Send, Loader2, CheckCircle, AlertCircle, MapPin, LogIn } from 'lucide-react';
 import { createReport } from '@/app/actions';
+import Link from 'next/link';
 
 const TARGET_GROUPS = ['Radni', 'Budowniczy', 'Posłowie'] as const;
 
@@ -58,7 +59,25 @@ export function ReportForm({ onSuccess, userNick }: ReportFormProps) {
     <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6">
       <h2 className="text-lg font-bold text-slate-100 mb-5">Nowe zgłoszenie</h2>
 
-      <form ref={formRef} action={handleSubmit} className="space-y-4">
+      {!userNick ? (
+        <div className="flex flex-col items-center gap-4 py-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-slate-700/60 flex items-center justify-center">
+            <LogIn className="w-6 h-6 text-slate-400" />
+          </div>
+          <div>
+            <p className="text-slate-300 font-medium">Wymagane logowanie</p>
+            <p className="text-slate-500 text-sm mt-1">Zaloguj się, aby wysłać zgłoszenie</p>
+          </div>
+          <Link
+            href="/auth"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            <LogIn className="w-4 h-4" />
+            Zaloguj się
+          </Link>
+        </div>
+      ) : (
+        <form ref={formRef} action={handleSubmit} className="space-y-4">
         {/* Nick + Avatar */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Nick z gry</label>
@@ -179,6 +198,7 @@ export function ReportForm({ onSuccess, userNick }: ReportFormProps) {
           {isPending ? 'Wysyłanie...' : 'Wyślij zgłoszenie'}
         </button>
       </form>
+      )}
     </div>
   );
 }
