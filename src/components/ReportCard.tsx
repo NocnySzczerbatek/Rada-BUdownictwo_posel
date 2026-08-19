@@ -20,22 +20,20 @@ const statusConfig: Record<ReportStatus, { label: string; icon: React.ReactNode;
   },
 };
 
-const reportTypeColors: Record<string, string> = {
-  'Nowy budynek hodowlany': 'text-emerald-400',
-  'Zmiana w prawie': 'text-violet-400',
-  'Błąd infrastruktury': 'text-red-400',
-  'Projekt zagospodarowania': 'text-sky-400',
-  'Wniosek legislacyjny': 'text-violet-400',
-  'Sprawa administracyjna': 'text-amber-400',
+const borderByStatus: Record<ReportStatus, string> = {
+  Nowe: 'border-l-blue-500/70',
+  'W trakcie realizacji': 'border-l-amber-500/70',
+  Zakończone: 'border-l-emerald-500/70',
 };
 
 interface ReportCardProps {
   report: Report;
+  onClick: () => void;
 }
 
-export function ReportCard({ report }: ReportCardProps) {
+export function ReportCard({ report, onClick }: ReportCardProps) {
   const status = statusConfig[report.status] ?? statusConfig['Nowe'];
-  const typeColor = reportTypeColors[report.report_type] ?? 'text-slate-400';
+  const borderColor = borderByStatus[report.status] ?? borderByStatus['Nowe'];
 
   const formattedDate = new Date(report.created_at).toLocaleDateString('pl-PL', {
     day: '2-digit',
@@ -46,10 +44,15 @@ export function ReportCard({ report }: ReportCardProps) {
   });
 
   return (
-    <div className="group relative bg-slate-800/60 border border-slate-700/50 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-800/80 transition-all duration-200 hover:shadow-lg hover:shadow-black/20">
-      {/* Accent line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-slate-500/30 to-transparent rounded-t-xl" />
-
+    <button
+      onClick={onClick}
+      className={clsx(
+        'group relative w-full text-left bg-slate-800/60 border border-slate-700/50 border-l-4 rounded-xl p-5',
+        'hover:border-slate-600 hover:bg-slate-800/80 transition-all duration-200 hover:shadow-lg hover:shadow-black/20',
+        'focus:outline-none focus:ring-2 focus:ring-emerald-500/40',
+        borderColor
+      )}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -73,12 +76,12 @@ export function ReportCard({ report }: ReportCardProps) {
 
       {/* Type tag */}
       <div className="flex items-center gap-1.5 mb-3">
-        <Tag className={clsx('w-3.5 h-3.5', typeColor)} />
-        <span className={clsx('text-xs font-medium', typeColor)}>{report.report_type}</span>
+        <Tag className="w-3.5 h-3.5 text-slate-400" />
+        <span className="text-xs font-medium text-slate-400">{report.report_type}</span>
       </div>
 
       {/* Content */}
       <p className="text-slate-300 text-sm leading-relaxed line-clamp-4">{report.content}</p>
-    </div>
+    </button>
   );
 }

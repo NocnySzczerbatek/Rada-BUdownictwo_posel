@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { clsx } from 'clsx';
 import { Gavel, HardHat, ScrollText, FileX } from 'lucide-react';
 import { ReportCard } from './ReportCard';
-import type { Report, TargetGroup } from '@/types';
+import { ReportModal } from './ReportModal';
+import type { Report, TargetGroup, ReportStatus } from '@/types';
 
 const TABS: { id: TargetGroup; label: string; icon: React.ReactNode; description: string }[] = [
   {
@@ -31,8 +32,15 @@ interface DashboardProps {
   reports: Report[];
 }
 
-export function Dashboard({ reports }: DashboardProps) {
+export function Dashboard({ reports: initialReports }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TargetGroup>('Posłowie');
+  const [reports, setReports] = useState<Report[]>(initialReports);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+  function handleStatusChange(id: string, status: ReportStatus) {
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    setSelectedReport((prev) => (prev?.id === id ? { ...prev, status } : prev));
+  }
 
   const filtered = reports.filter((r) => r.target_group === activeTab);
 
@@ -40,6 +48,13 @@ export function Dashboard({ reports }: DashboardProps) {
 
   return (
     <div>
+      {selectedReport && (
+        <ReportModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+          onStatusChange={handleStatusChange}
+        />
+      )}
       {/* Tab navigation */}
       <div className="flex flex-wrap gap-2 mb-6">
         {TABS.map((tab) => {
@@ -87,7 +102,7 @@ export function Dashboard({ reports }: DashboardProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((report) => (
-            <ReportCard key={report.id} report={report} />
+            <ReportCard key={report.id} report={report} onClick={() => setSelectedReport(report)} />
           ))}
         </div>
       )}
