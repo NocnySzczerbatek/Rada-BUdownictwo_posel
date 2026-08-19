@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Dashboard } from '@/components/Dashboard';
 import { ReportForm } from '@/components/ReportForm';
+import { MobileFormDrawer } from '@/components/MobileFormDrawer';
 import type { Report } from '@/types';
 import { Shield, AlertTriangle } from 'lucide-react';
 
@@ -67,12 +68,15 @@ export default async function Home() {
               <Dashboard reports={reports} />
             </section>
 
-            {/* Form (right sidebar) */}
-            <aside className="lg:sticky lg:top-24">
+            {/* Form (right sidebar) – desktop only */}
+            <aside className="hidden lg:block lg:sticky lg:top-24">
               <ReportForm />
             </aside>
           </div>
         </main>
+
+        {/* Mobile FAB + drawer */}
+        <MobileFormDrawer />
 
         {/* Footer */}
         <footer className="border-t border-slate-800/60 mt-16 py-6 text-center text-slate-600 text-xs">

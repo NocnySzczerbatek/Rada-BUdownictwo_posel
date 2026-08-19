@@ -8,5 +8,7 @@ export interface Report {
   report_type: string;
   content: string;
   status: ReportStatus;
+  coordinates: string | null;
+  votes: number;
   created_at: string;
 }

@@ -1,31 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { clsx } from 'clsx';
-import { Gavel, HardHat, ScrollText, FileX } from 'lucide-react';
+import { Gavel, HardHat, ScrollText, FileX, ArrowUpDown, Clock } from 'lucide-react';
 import { ReportCard } from './ReportCard';
 import { ReportModal } from './ReportModal';
+import { voteForReport } from '@/app/actions';
 import type { Report, TargetGroup, ReportStatus } from '@/types';
 
-const TABS: { id: TargetGroup; label: string; icon: React.ReactNode; description: string }[] = [
-  {
-    id: 'Posłowie',
-    label: 'Dla Posłów',
-    icon: <Gavel className="w-4 h-4" />,
-    description: 'Sprawy prawne i organizacja miasta',
-  },
-  {
-    id: 'Budowniczy',
-    label: 'Dla Budowniczych',
-    icon: <HardHat className="w-4 h-4" />,
-    description: 'Projekty budowlane i infrastruktura',
-  },
-  {
-    id: 'Radni',
-    label: 'Dla Radnych',
-    icon: <ScrollText className="w-4 h-4" />,
-    description: 'Sprawy bieżące i zarządzanie gruntami',
-  },
+const TABS: { id: TargetGroup; label: string; shortLabel: string; icon: React.ReactNode; description: string }[] = [
+  { id: 'Posłowie', label: 'Dla Posłów', shortLabel: 'Posłowie', icon: <Gavel className="w-4 h-4" />, description: 'Sprawy prawne i organizacja miasta' },
+  { id: 'Budowniczy', label: 'Dla Budowniczych', shortLabel: 'Budowniczy', icon: <HardHat className="w-4 h-4" />, description: 'Projekty budowlane i infrastruktura' },
+  { id: 'Radni', label: 'Dla Radnych', shortLabel: 'Radni', icon: <ScrollText className="w-4 h-4" />, description: 'Sprawy bieżące i zarządzanie gruntami' },
 ];
 
 interface DashboardProps {
@@ -36,18 +22,35 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TargetGroup>('Posłowie');
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [sortBy, setSortBy] = useState<'date' | 'votes'>('date');
+  const [, startVoteTransition] = useTransition();
 
   function handleStatusChange(id: string, status: ReportStatus) {
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     setSelectedReport((prev) => (prev?.id === id ? { ...prev, status } : prev));
   }
 
-  const filtered = reports.filter((r) => r.target_group === activeTab);
+  function handleVote(id: string) {
+    // Optimistic update
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, votes: r.votes + 1 } : r)));
+    startVoteTransition(async () => {
+      await voteForReport(id);
+    });
+  }
+
+  const filtered = reports
+    .filter((r) => r.target_group === activeTab)
+    .sort((a, b) => sortBy === 'votes' ? b.votes - a.votes : 0);
 
   const activeTabData = TABS.find((t) => t.id === activeTab)!;
 
+  const tabButtons = TABS.map((tab) => {
+    const count = reports.filter((r) => r.target_group === tab.id).length;
+    return { ...tab, count };
+  });
+
   return (
-    <div>
+    <div className="pb-16 sm:pb-0">
       {selectedReport && (
         <ReportModal
           report={selectedReport}
@@ -55,39 +58,41 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
           onStatusChange={handleStatusChange}
         />
       )}
-      {/* Tab navigation */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {TABS.map((tab) => {
-          const count = reports.filter((r) => r.target_group === tab.id).length;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
-                activeTab === tab.id
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40'
-                  : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-700/60 hover:text-slate-200'
-              )}
-            >
-              {tab.icon}
-              {tab.label}
-              <span
-                className={clsx(
-                  'ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold',
-                  activeTab === tab.id ? 'bg-emerald-500/30 text-emerald-100' : 'bg-slate-700 text-slate-400'
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+
+      {/* Desktop tab navigation */}
+      <div className="hidden sm:flex flex-wrap gap-2 mb-6">
+        {tabButtons.map(({ id, label, icon, count }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+              activeTab === id
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40'
+                : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-700/60 hover:text-slate-200'
+            )}
+          >
+            {icon}
+            {label}
+            <span className={clsx('ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold',
+              activeTab === id ? 'bg-emerald-500/30 text-emerald-100' : 'bg-slate-700 text-slate-400'
+            )}>
+              {count}
+            </span>
+          </button>
+        ))}
       </div>
 
-      {/* Section header */}
-      <div className="mb-4">
+      {/* Section header + sort toggle */}
+      <div className="flex items-center justify-between mb-4">
         <p className="text-slate-400 text-sm">{activeTabData.description}</p>
+        <button
+          onClick={() => setSortBy(sortBy === 'date' ? 'votes' : 'date')}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/60 border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/60 transition-colors"
+        >
+          {sortBy === 'votes' ? <Clock className="w-3.5 h-3.5" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
+          {sortBy === 'votes' ? 'Sortuj: data' : 'Sortuj: poparcie'}
+        </button>
       </div>
 
       {/* Report grid or empty state */}
@@ -102,10 +107,40 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((report) => (
-            <ReportCard key={report.id} report={report} onClick={() => setSelectedReport(report)} />
+            <ReportCard
+              key={report.id}
+              report={report}
+              onClick={() => setSelectedReport(report)}
+              onVote={handleVote}
+            />
           ))}
         </div>
       )}
+
+      {/* Mobile bottom tab bar */}
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800">
+        <div className="flex">
+          {tabButtons.map(({ id, shortLabel, icon, count }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={clsx(
+                'flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors',
+                activeTab === id ? 'text-emerald-400' : 'text-slate-500'
+              )}
+            >
+              {icon}
+              <span>{shortLabel}</span>
+              <span className={clsx(
+                'text-[10px] font-bold px-1.5 rounded-full',
+                activeTab === id ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+              )}>
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
