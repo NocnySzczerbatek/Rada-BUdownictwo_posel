@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { Gavel, HardHat, ScrollText, FileX, ArrowUpDown, Clock, Archive } from 'lucide-react';
 import { ReportCard } from './ReportCard';
@@ -21,6 +21,11 @@ interface DashboardProps {
 export function Dashboard({ reports: initialReports }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TargetGroup>('Posłowie');
   const [reports, setReports] = useState<Report[]>(initialReports);
+
+  // Sync when server re-fetches after form submission
+  useEffect(() => {
+    setReports(initialReports);
+  }, [initialReports]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'votes'>('date');
   const [showArchive, setShowArchive] = useState(false);
