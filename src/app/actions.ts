@@ -76,3 +76,29 @@ export async function addComment(reportId: string, nick: string, content: string
   if (error) return { error: 'Błąd podczas dodawania komentarza.' };
   return { success: true };
 }
+
+export async function archiveReport(id: string) {
+  if (!isSupabaseConfigured) return { error: 'Baza nie jest skonfigurowana.' };
+
+  const { error } = await supabase
+    .from('reports')
+    .update({ archived: true })
+    .eq('id', id);
+
+  if (error) return { error: 'Błąd podczas archiwizacji.' };
+  revalidatePath('/');
+  return { success: true };
+}
+
+export async function unarchiveReport(id: string) {
+  if (!isSupabaseConfigured) return { error: 'Baza nie jest skonfigurowana.' };
+
+  const { error } = await supabase
+    .from('reports')
+    .update({ archived: false })
+    .eq('id', id);
+
+  if (error) return { error: 'Błąd podczas przywracania.' };
+  revalidatePath('/');
+  return { success: true };
+}

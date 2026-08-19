@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { clsx } from 'clsx';
-import { Gavel, HardHat, ScrollText, FileX, ArrowUpDown, Clock } from 'lucide-react';
+import { Gavel, HardHat, ScrollText, FileX, ArrowUpDown, Clock, Archive } from 'lucide-react';
 import { ReportCard } from './ReportCard';
 import { ReportModal } from './ReportModal';
 import { voteForReport } from '@/app/actions';
@@ -23,6 +23,7 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'votes'>('date');
+  const [showArchive, setShowArchive] = useState(false);
   const [, startVoteTransition] = useTransition();
 
   function handleStatusChange(id: string, status: ReportStatus) {
@@ -38,8 +39,12 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
     });
   }
 
+  function handleArchive(id: string, archived: boolean) {
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, archived } : r)));
+  }
+
   const filtered = reports
-    .filter((r) => r.target_group === activeTab)
+    .filter((r) => r.target_group === activeTab && r.archived === showArchive)
     .sort((a, b) => sortBy === 'votes' ? b.votes - a.votes : 0);
 
   const activeTabData = TABS.find((t) => t.id === activeTab)!;
@@ -56,6 +61,7 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
           report={selectedReport}
           onClose={() => setSelectedReport(null)}
           onStatusChange={handleStatusChange}
+          onArchive={handleArchive}
         />
       )}
 
@@ -83,16 +89,30 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
         ))}
       </div>
 
-      {/* Section header + sort toggle */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Section header + sort + archive toggle */}
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <p className="text-slate-400 text-sm">{activeTabData.description}</p>
-        <button
-          onClick={() => setSortBy(sortBy === 'date' ? 'votes' : 'date')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/60 border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/60 transition-colors"
-        >
-          {sortBy === 'votes' ? <Clock className="w-3.5 h-3.5" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
-          {sortBy === 'votes' ? 'Sortuj: data' : 'Sortuj: poparcie'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSortBy(sortBy === 'date' ? 'votes' : 'date')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/60 border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/60 transition-colors"
+          >
+            {sortBy === 'votes' ? <Clock className="w-3.5 h-3.5" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
+            {sortBy === 'votes' ? 'Sortuj: data' : 'Sortuj: poparcie'}
+          </button>
+          <button
+            onClick={() => setShowArchive(!showArchive)}
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+              showArchive
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                : 'bg-slate-800/60 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/60'
+            )}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {showArchive ? 'Aktywne' : `Archiwum (${reports.filter(r => r.target_group === activeTab && r.archived).length})`}
+          </button>
+        </div>
       </div>
 
       {/* Report grid or empty state */}
@@ -102,7 +122,9 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
             <FileX className="w-7 h-7 text-slate-600" />
           </div>
           <p className="text-slate-400 font-medium">Brak zgłoszeń</p>
-          <p className="text-slate-600 text-sm mt-1">Nie ma jeszcze żadnych zgłoszeń dla tej grupy.</p>
+          <p className="text-slate-600 text-sm mt-1">
+            {showArchive ? 'Brak zarchiwizowanych zgłoszeń.' : 'Nie ma jeszcze żadnych zgłoszeń dla tej grupy.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

@@ -10,6 +10,7 @@ export interface Report {
   status: ReportStatus;
   coordinates: string | null;
   votes: number;
+  archived: boolean;
   created_at: string;
 }
 

@@ -2,8 +2,8 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
-import { X, User, Calendar, Tag, AlertCircle, Clock, CheckCircle2, Loader2, MessageSquare, Send } from 'lucide-react';
-import { updateReportStatus, addComment } from '@/app/actions';
+import { X, User, Calendar, Tag, AlertCircle, Clock, CheckCircle2, Loader2, MessageSquare, Send, Archive, ArchiveRestore } from 'lucide-react';
+import { updateReportStatus, addComment, archiveReport, unarchiveReport } from '@/app/actions';
 import { supabase } from '@/lib/supabase';
 import type { Report, ReportStatus, Comment } from '@/types';
 
@@ -47,11 +47,14 @@ interface ReportModalProps {
   report: Report;
   onClose: () => void;
   onStatusChange: (id: string, status: ReportStatus) => void;
+  onArchive: (id: string, archived: boolean) => void;
 }
 
-export function ReportModal({ report, onClose, onStatusChange }: ReportModalProps) {
+export function ReportModal({ report, onClose, onStatusChange, onArchive }: ReportModalProps) {
   const [currentStatus, setCurrentStatus] = useState<ReportStatus>(report.status);
+  const [isArchived, setIsArchived] = useState(report.archived);
   const [isPending, startTransition] = useTransition();
+  const [isArchiving, startArchiveTransition] = useTransition();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentNick, setCommentNick] = useState('');
@@ -93,6 +96,20 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
       if (!res?.error) {
         setCurrentStatus(newStatus);
         onStatusChange(report.id, newStatus);
+      }
+    });
+  }
+
+  function handleArchive() {
+    startArchiveTransition(async () => {
+      const newArchived = !isArchived;
+      const res = newArchived
+        ? await archiveReport(report.id)
+        : await unarchiveReport(report.id);
+      if (!res?.error) {
+        setIsArchived(newArchived);
+        onArchive(report.id, newArchived);
+        if (newArchived) onClose();
       }
     });
   }
@@ -155,12 +172,29 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
                 <span>{formattedDate}</span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleArchive}
+                disabled={isArchiving}
+                title={isArchived ? 'Przywróć z archiwum' : 'Przenieś do archiwum'}
+                className={clsx(
+                  'p-1.5 rounded-lg transition-colors',
+                  isArchived
+                    ? 'text-amber-400 hover:bg-amber-500/20'
+                    : 'text-slate-400 hover:text-amber-400 hover:bg-amber-500/10'
+                )}
+              >
+                {isArchiving
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Status + Type */}
