@@ -47,11 +47,13 @@ interface ReportModalProps {
   onClose: () => void;
   onStatusChange: (id: string, status: ReportStatus) => void;
   onArchive: (id: string, archived: boolean) => void;
+  userNick?: string | null;
 }
 
-export function ReportModal({ report, onClose, onStatusChange, onArchive }: ReportModalProps) {
+export function ReportModal({ report, onClose, onStatusChange, onArchive, userNick }: ReportModalProps) {
   const [currentStatus, setCurrentStatus] = useState<ReportStatus>(report.status);
   const [isArchived, setIsArchived] = useState(report.archived);
+  const isAuthor = !!userNick && userNick.toLowerCase() === report.nick.toLowerCase();
   const [isPending, startTransition] = useTransition();
   const [isArchiving, startArchiveTransition] = useTransition();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -173,21 +175,23 @@ export function ReportModal({ report, onClose, onStatusChange, onArchive }: Repo
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={handleArchive}
-                disabled={isArchiving}
-                title={isArchived ? 'Przywróć z archiwum' : 'Przenieś do archiwum'}
-                className={clsx(
-                  'p-1.5 rounded-lg transition-colors',
-                  isArchived
-                    ? 'text-amber-400 hover:bg-amber-500/20'
-                    : 'text-slate-400 hover:text-amber-400 hover:bg-amber-500/10'
-                )}
-              >
-                {isArchiving
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
-              </button>
+              {isAuthor && (
+                <button
+                  onClick={handleArchive}
+                  disabled={isArchiving}
+                  title={isArchived ? 'Przywróć z archiwum' : 'Przenieś do archiwum'}
+                  className={clsx(
+                    'p-1.5 rounded-lg transition-colors',
+                    isArchived
+                      ? 'text-amber-400 hover:bg-amber-500/20'
+                      : 'text-slate-400 hover:text-amber-400 hover:bg-amber-500/10'
+                  )}
+                >
+                  {isArchiving
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"

@@ -16,9 +16,10 @@ const TABS: { id: TargetGroup; label: string; shortLabel: string; icon: React.Re
 
 interface DashboardProps {
   reports: Report[];
+  userNick?: string | null;
 }
 
-export function Dashboard({ reports: initialReports }: DashboardProps) {
+export function Dashboard({ reports: initialReports, userNick }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TargetGroup>('Posłowie');
   const [reports, setReports] = useState<Report[]>(initialReports);
 
@@ -71,6 +72,7 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
           onClose={() => setSelectedReport(null)}
           onStatusChange={handleStatusChange}
           onArchive={handleArchive}
+          userNick={userNick}
         />
       )}
 

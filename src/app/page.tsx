@@ -103,7 +103,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
             {/* Dashboard (left) */}
             <section>
-              <Dashboard reports={reports} />
+              <Dashboard reports={reports} userNick={profile?.mc_nickname ?? null} />
             </section>
 
             {/* Form (right sidebar) – desktop only */}
