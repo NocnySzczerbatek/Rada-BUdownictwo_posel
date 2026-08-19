@@ -37,6 +37,10 @@ interface ReportCardProps {
 
 export function ReportCard({ report, onClick, onVote }: ReportCardProps) {
   const [copied, setCopied] = useState(false);
+  const [hasVoted, setHasVoted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`voted_${report.id}`) === '1';
+  });
 
   const status = statusConfig[report.status] ?? statusConfig['Nowe'];
   const borderColor = borderByStatus[report.status] ?? borderByStatus['Nowe'];
@@ -54,6 +58,9 @@ export function ReportCard({ report, onClick, onVote }: ReportCardProps) {
 
   function handleVote(e: React.MouseEvent) {
     e.stopPropagation();
+    if (hasVoted) return;
+    localStorage.setItem(`voted_${report.id}`, '1');
+    setHasVoted(true);
     onVote(report.id);
   }
 
@@ -101,7 +108,13 @@ export function ReportCard({ report, onClick, onVote }: ReportCardProps) {
       <div className="flex items-center gap-2 mt-auto pt-2 border-t border-slate-700/40">
         <button
           onClick={handleVote}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-700/50 hover:bg-emerald-600/20 hover:text-emerald-400 text-slate-400 border border-slate-700/50 hover:border-emerald-500/30 transition-colors"
+          disabled={hasVoted}
+          className={clsx(
+            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors',
+            hasVoted
+              ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30 cursor-default'
+              : 'bg-slate-700/50 hover:bg-emerald-600/20 hover:text-emerald-400 text-slate-400 border-slate-700/50 hover:border-emerald-500/30'
+          )}
         >
           <ThumbsUp className="w-3.5 h-3.5" />
           <span>Popieram</span>
