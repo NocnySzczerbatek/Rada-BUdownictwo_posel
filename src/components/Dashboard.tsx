@@ -54,6 +54,10 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
     return { ...tab, count };
   });
 
+  const activeCount = reports.filter((r) => !r.archived).length;
+  const activeCountLabel =
+    activeCount === 1 ? 'zgłoszenie' : activeCount < 5 ? 'zgłoszenia' : 'zgłoszeń';
+
   return (
     <div className="pb-16 sm:pb-0">
       {selectedReport && (
@@ -68,12 +72,7 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
       {/* Total count */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-100">Katalog Zgłoszeń</h2>
-        <p className="text-slate-400 text-sm mt-1">
-          {(() => {
-            const active = reports.filter((r) => !r.archived).length;
-            return `Łącznie ${active} ${active === 1 ? 'zgłoszenie' : active < 5 ? 'zgłoszenia' : 'zgłoszeń'}`;
-          })()}
-        </p>
+        <p className="text-slate-400 text-sm mt-1">Łącznie {activeCount} {activeCountLabel}</p>
       </div>
       )}
 
