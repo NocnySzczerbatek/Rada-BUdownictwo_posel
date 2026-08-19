@@ -74,7 +74,6 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
         <h2 className="text-2xl font-bold text-slate-100">Katalog Zgłoszeń</h2>
         <p className="text-slate-400 text-sm mt-1">Łącznie {activeCount} {activeCountLabel}</p>
       </div>
-      )}
 
       {/* Desktop tab navigation */}
       <div className="hidden sm:flex flex-wrap gap-2 mb-6">
