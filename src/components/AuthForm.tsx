@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
+import { adminRegisterUser } from '@/app/auth/actions';
 import { useRouter } from 'next/navigation';
 import { Loader2, LogIn, UserPlus, Eye, EyeOff, Shield } from 'lucide-react';
 
@@ -27,30 +28,24 @@ export function AuthForm() {
 
     startTransition(async () => {
       const supabase = createBrowserSupabase();
+      setError('');
 
       if (mode === 'register') {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: mcEmail(nick),
-          password,
-          options: { data: { mc_nickname: nick.trim() } },
-        });
-        if (signUpError) {
-          setError(signUpError.message === 'User already registered'
-            ? 'Ten nick jest już zajęty.'
-            : signUpError.message);
+        // Use admin action to create user with email already confirmed
+        const res = await adminRegisterUser(nick.trim(), password);
+        if (res.error) {
+          setError(res.error);
           return;
         }
-        // If email confirmation is disabled, session is set immediately
-        // If not, try signing in directly anyway
-        if (!data.session) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: mcEmail(nick),
-            password,
-          });
-          if (signInError) {
-            setError('Konto utworzone. Zaloguj się używając swojego nicku i hasła.');
-            return;
-          }
+        // Sign in immediately after account creation
+        const supabase = createBrowserSupabase();
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: mcEmail(nick),
+          password,
+        });
+        if (signInError) {
+          setError('Konto utworzone. Zaloguj się teraz.');
+          return;
         }
         router.refresh();
         router.push('/');
