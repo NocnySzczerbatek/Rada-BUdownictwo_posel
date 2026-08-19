@@ -8,9 +8,33 @@ import Link from 'next/link';
 const TARGET_GROUPS = ['Radni', 'Budowniczy', 'Posłowie'] as const;
 
 const REPORT_TYPES: Record<string, string[]> = {
-  Budowniczy: ['Budowa / Rozbudowa', 'Renowacja terenu', 'Prace ziemne', 'Błąd infrastruktury', 'Inne'],
-  Radni: ['Zarządzanie gruntami', 'Wniosek o grant', 'Skargi i spory', 'Inicjatywa lokalna', 'Kontrola lokalna', 'Inne'],
-  Posłowie: ['Projekt ustawy', 'Polityka gospodarcza', 'Inwestycje państwowe', 'Sprawa administracyjna', 'Inne'],
+  Budowniczy: [
+    'Budowa nowej struktury (stajnia, obora, targ)',
+    'Naprawa / Przebudowa drogi lub mostu',
+    'Prace ziemne / Wyrównanie terenu',
+    'Rozbiórka opuszczonej budowli',
+    'Poprawki estetyczne i zieleń',
+    'Zgłoszenie błędu infrastruktury',
+    'Inne',
+  ],
+  Radni: [
+    'Wniosek o przydział / Powiększenie działki',
+    'Grant / Dotacja na rozwój hodowli',
+    'Spór sąsiedzki / Granice terenu',
+    'Pozwolenie na stoisko handlowe',
+    'Licencja na hodowlę zwierząt',
+    'Skarga na zaniedbane gospodarstwo',
+    'Inne',
+  ],
+  Posłowie: [
+    'Projekt ustawy / Zmiana prawa',
+    'Regulacja podatków i opłat',
+    'Ustalenie cen skupu produktów',
+    'Inwestycja państwowa',
+    'Wniosek o powołanie nowego urzędu',
+    'Odwołanie od decyzji urzędowej',
+    'Inne',
+  ],
 };
 
 interface ReportFormProps {
