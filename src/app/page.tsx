@@ -64,12 +64,6 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
             {/* Dashboard (left) */}
             <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-100">Katalog Zgłoszeń</h2>
-                <p className="text-slate-400 text-sm mt-1">
-                  Łącznie {reports.length} {reports.length === 1 ? 'zgłoszenie' : reports.length < 5 ? 'zgłoszenia' : 'zgłoszeń'}
-                </p>
-              </div>
               <Dashboard reports={reports} />
             </section>
 

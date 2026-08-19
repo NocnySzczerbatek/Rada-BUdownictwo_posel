@@ -50,7 +50,7 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
   const activeTabData = TABS.find((t) => t.id === activeTab)!;
 
   const tabButtons = TABS.map((tab) => {
-    const count = reports.filter((r) => r.target_group === tab.id).length;
+    const count = reports.filter((r) => r.target_group === tab.id && !r.archived).length;
     return { ...tab, count };
   });
 
@@ -63,6 +63,18 @@ export function Dashboard({ reports: initialReports }: DashboardProps) {
           onStatusChange={handleStatusChange}
           onArchive={handleArchive}
         />
+      )}
+
+      {/* Total count */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-slate-100">Katalog Zgłoszeń</h2>
+        <p className="text-slate-400 text-sm mt-1">
+          {(() => {
+            const active = reports.filter((r) => !r.archived).length;
+            return `Łącznie ${active} ${active === 1 ? 'zgłoszenie' : active < 5 ? 'zgłoszenia' : 'zgłoszeń'}`;
+          })()}
+        </p>
+      </div>
       )}
 
       {/* Desktop tab navigation */}
