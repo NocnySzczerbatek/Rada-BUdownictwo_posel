@@ -24,9 +24,8 @@ export async function createReport(formData: FormData) {
     target_group,
     report_type,
     content: content.trim(),
-    coordinates,
+    ...(coordinates ? { coordinates } : {}),
     status: 'Nowe',
-    votes: 0,
   });
 
   if (error) {

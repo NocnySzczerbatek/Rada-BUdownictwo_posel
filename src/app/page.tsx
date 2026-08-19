@@ -17,7 +17,12 @@ async function getReports(): Promise<Report[]> {
     console.error('Error fetching reports:', error);
     return [];
   }
-  return (data as Report[]) ?? [];
+  return (data as Report[]).map((r) => ({
+    ...r,
+    votes: r.votes ?? 0,
+    archived: r.archived ?? false,
+    coordinates: r.coordinates ?? null,
+  })) ?? [];
 }
 
 export default async function Home() {
