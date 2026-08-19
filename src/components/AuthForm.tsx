@@ -29,7 +29,7 @@ export function AuthForm() {
       const supabase = createBrowserSupabase();
 
       if (mode === 'register') {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email: mcEmail(nick),
           password,
           options: { data: { mc_nickname: nick.trim() } },
@@ -39,6 +39,18 @@ export function AuthForm() {
             ? 'Ten nick jest już zajęty.'
             : signUpError.message);
           return;
+        }
+        // If email confirmation is disabled, session is set immediately
+        // If not, try signing in directly anyway
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: mcEmail(nick),
+            password,
+          });
+          if (signInError) {
+            setError('Konto utworzone. Zaloguj się używając swojego nicku i hasła.');
+            return;
+          }
         }
         router.refresh();
         router.push('/');
