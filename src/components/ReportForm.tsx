@@ -4,17 +4,17 @@ import { useRef, useState, useTransition } from 'react';
 import { Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { createReport } from '@/app/actions';
 
-const TARGET_GROUPS = ['Radni', 'Budowniczowie', 'Posłowie'] as const;
+const TARGET_GROUPS = ['Radni', 'Budowniczy', 'Posłowie'] as const;
 
 const REPORT_TYPES: Record<string, string[]> = {
   Radni: ['Sprawa administracyjna', 'Zarządzanie gruntami', 'Wniosek o grant', 'Kontrola lokalna', 'Inne – Radni'],
-  Budowniczowie: [
+  Budowniczy: [
     'Nowy budynek hodowlany',
     'Błąd infrastruktury',
     'Projekt zagospodarowania',
     'Rozbudowa stajni/obory',
     'Infrastruktura rolnicza',
-    'Inne – Budowniczowie',
+    'Inne – Budowniczy',
   ],
   Posłowie: ['Wniosek legislacyjny', 'Zmiana w prawie', 'Organizacja miasta', 'Debata publiczna', 'Inne – Posłowie'],
 };

@@ -14,7 +14,7 @@ const TABS: { id: TargetGroup; label: string; icon: React.ReactNode; description
     description: 'Sprawy prawne i organizacja miasta',
   },
   {
-    id: 'Budowniczowie',
+    id: 'Budowniczy',
     label: 'Dla Budowniczych',
     icon: <HardHat className="w-4 h-4" />,
     description: 'Projekty budowlane i infrastruktura',

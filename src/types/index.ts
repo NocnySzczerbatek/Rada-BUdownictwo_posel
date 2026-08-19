@@ -1,4 +1,4 @@
-export type TargetGroup = 'Radni' | 'Budowniczowie' | 'Posłowie';
+export type TargetGroup = 'Radni' | 'Budowniczy' | 'Posłowie';
 export type ReportStatus = 'Nowe' | 'W trakcie realizacji' | 'Zakończone';
 
 export interface Report {
