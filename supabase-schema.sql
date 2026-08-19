@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS reports (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nick VARCHAR(50) NOT NULL,
-  target_group VARCHAR(20) NOT NULL CHECK (target_group IN ('Radni', 'Budowniczowie', 'Posłowie')),
+  target_group VARCHAR(20) NOT NULL CHECK (target_group IN ('Radni', 'Budowniczy', 'Posłowie')),
   report_type VARCHAR(100) NOT NULL,
   content TEXT NOT NULL,
   status VARCHAR(30) DEFAULT 'Nowe' CHECK (status IN ('Nowe', 'W trakcie realizacji', 'Zakończone')),
