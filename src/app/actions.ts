@@ -63,3 +63,16 @@ export async function voteForReport(id: string) {
   if (error) return { error: 'Błąd głosowania.' };
   return { success: true };
 }
+
+export async function addComment(reportId: string, nick: string, content: string) {
+  if (!isSupabaseConfigured) return { error: 'Baza nie jest skonfigurowana.' };
+
+  const { error } = await supabase.from('comments').insert({
+    report_id: reportId,
+    nick: nick.trim(),
+    content: content.trim(),
+  });
+
+  if (error) return { error: 'Błąd podczas dodawania komentarza.' };
+  return { success: true };
+}

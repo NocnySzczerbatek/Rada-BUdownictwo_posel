@@ -12,3 +12,11 @@ export interface Report {
   votes: number;
   created_at: string;
 }
+
+export interface Comment {
+  id: string;
+  report_id: string;
+  nick: string;
+  content: string;
+  created_at: string;
+}

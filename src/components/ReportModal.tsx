@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
-import { X, User, Calendar, Tag, AlertCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
-import { updateReportStatus } from '@/app/actions';
-import type { Report, ReportStatus } from '@/types';
+import { X, User, Calendar, Tag, AlertCircle, Clock, CheckCircle2, Loader2, MessageSquare, Send } from 'lucide-react';
+import { updateReportStatus, addComment } from '@/app/actions';
+import { supabase } from '@/lib/supabase';
+import type { Report, ReportStatus, Comment } from '@/types';
 
 const statusConfig: Record<ReportStatus, { label: string; icon: React.ReactNode; badgeClass: string }> = {
   Nowe: {
@@ -51,6 +52,30 @@ interface ReportModalProps {
 export function ReportModal({ report, onClose, onStatusChange }: ReportModalProps) {
   const [currentStatus, setCurrentStatus] = useState<ReportStatus>(report.status);
   const [isPending, startTransition] = useTransition();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentNick, setCommentNick] = useState('');
+  const [commentContent, setCommentContent] = useState('');
+  const [isSubmittingComment, startCommentTransition] = useTransition();
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase
+      .from('comments')
+      .select('*')
+      .eq('report_id', report.id)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        setComments((data as Comment[]) ?? []);
+        setLoadingComments(false);
+      });
+  }, [report.id]);
+
+  useEffect(() => {
+    if (!loadingComments) {
+      commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [comments.length, loadingComments]);
 
   const status = statusConfig[currentStatus];
 
@@ -72,6 +97,24 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
     });
   }
 
+  function handleAddComment() {
+    if (!commentNick.trim() || !commentContent.trim()) return;
+    const optimistic: Comment = {
+      id: crypto.randomUUID(),
+      report_id: report.id,
+      nick: commentNick.trim(),
+      content: commentContent.trim(),
+      created_at: new Date().toISOString(),
+    };
+    setComments((prev) => [...prev, optimistic]);
+    const nick = commentNick;
+    const content = commentContent;
+    setCommentContent('');
+    startCommentTransition(async () => {
+      await addComment(report.id, nick, content);
+    });
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -83,7 +126,7 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
       {/* Modal */}
       <div
         className={clsx(
-          'relative w-full max-w-lg bg-slate-900 rounded-2xl shadow-2xl border-2 transition-colors',
+          'relative w-full max-w-lg bg-slate-900 rounded-2xl shadow-2xl border-2 transition-colors max-h-[90dvh] flex flex-col',
           currentStatus === 'Zakończone' && 'border-emerald-500/50',
           currentStatus === 'W trakcie realizacji' && 'border-amber-500/50',
           currentStatus === 'Nowe' && 'border-blue-500/50'
@@ -99,7 +142,7 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
           )}
         />
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-5">
             <div>
@@ -162,6 +205,81 @@ export function ReportModal({ report, onClose, onStatusChange }: ReportModalProp
                   {btn.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Comments */}
+          <div className="mt-5 pt-5 border-t border-slate-800">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare className="w-4 h-4 text-slate-400" />
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                Komentarze ({comments.length})
+              </p>
+            </div>
+
+            {/* Comment list */}
+            <div className="space-y-3 max-h-52 overflow-y-auto pr-1 mb-4">
+              {loadingComments ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+                </div>
+              ) : comments.length === 0 ? (
+                <p className="text-slate-600 text-xs text-center py-4">Brak komentarzy. Bądź pierwszy!</p>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="flex gap-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://mc-heads.net/avatar/${c.nick}/24`}
+                      alt=""
+                      className="w-6 h-6 rounded-full bg-slate-700 shrink-0 mt-0.5"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-semibold text-slate-300">{c.nick}</span>
+                        <span className="text-[10px] text-slate-600">
+                          {new Date(c.created_at).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs leading-relaxed mt-0.5">{c.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
+            {/* Add comment form */}
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={commentNick}
+                onChange={(e) => setCommentNick(e.target.value)}
+                placeholder="Twój nick"
+                maxLength={50}
+                className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors"
+              />
+              <div className="flex gap-2">
+                <textarea
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment();
+                  }}
+                  placeholder="Napisz komentarz... (Ctrl+Enter aby wysłać)"
+                  rows={2}
+                  maxLength={500}
+                  className="flex-1 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors resize-none"
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={isSubmittingComment || !commentNick.trim() || !commentContent.trim()}
+                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors shrink-0"
+                >
+                  {isSubmittingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
