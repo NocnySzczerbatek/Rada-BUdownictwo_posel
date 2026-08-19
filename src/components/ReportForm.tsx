@@ -7,23 +7,39 @@ import { createReport } from '@/app/actions';
 const TARGET_GROUPS = ['Radni', 'Budowniczy', 'Posłowie'] as const;
 
 const REPORT_TYPES: Record<string, string[]> = {
-  Radni: ['Sprawa administracyjna', 'Zarządzanie gruntami', 'Wniosek o grant', 'Kontrola lokalna', 'Inne – Radni'],
   Budowniczy: [
-    'Nowy budynek hodowlany',
+    'Budowa / Rozbudowa',
+    'Renowacja terenu',
+    'Prace ziemne',
     'Błąd infrastruktury',
-    'Projekt zagospodarowania',
-    'Rozbudowa stajni/obory',
-    'Infrastruktura rolnicza',
-    'Inne – Budowniczy',
+    'Inne',
   ],
-  Posłowie: ['Wniosek legislacyjny', 'Zmiana w prawie', 'Organizacja miasta', 'Debata publiczna', 'Inne – Posłowie'],
+  Radni: [
+    'Zarządzanie gruntami',
+    'Wniosek o grant',
+    'Skargi i spory',
+    'Inicjatywa lokalna',
+    'Kontrola lokalna',
+    'Inne',
+  ],
+  Posłowie: [
+    'Projekt ustawy',
+    'Polityka gospodarcza',
+    'Inwestycje państwowe',
+    'Sprawa administracyjna',
+    'Inne',
+  ],
 };
 
 export function ReportForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<string>('Radni');
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+  function handleGroupChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setSelectedGroup(e.target.value);
+  }
 
   async function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -34,7 +50,7 @@ export function ReportForm() {
       } else {
         setResult({ type: 'success', message: 'Zgłoszenie zostało wysłane pomyślnie!' });
         formRef.current?.reset();
-        setSelectedGroup('Radni');
+        setSelectedGroup(null);
       }
     });
   }
@@ -62,10 +78,11 @@ export function ReportForm() {
           <select
             name="target_group"
             required
-            value={selectedGroup}
-            onChange={(e) => setSelectedGroup(e.target.value)}
+            value={selectedGroup ?? ''}
+            onChange={handleGroupChange}
             className="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-colors appearance-none cursor-pointer"
           >
+            <option value="" disabled className="bg-slate-800 text-slate-500">Wybierz grupę...</option>
             {TARGET_GROUPS.map((g) => (
               <option key={g} value={g} className="bg-slate-800">
                 {g}
@@ -80,13 +97,18 @@ export function ReportForm() {
           <select
             name="report_type"
             required
-            className="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-colors appearance-none cursor-pointer"
+            disabled={!selectedGroup}
+            className="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-colors appearance-none disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {REPORT_TYPES[selectedGroup]?.map((t) => (
-              <option key={t} value={t} className="bg-slate-800">
-                {t}
-              </option>
-            ))}
+            {!selectedGroup ? (
+              <option value="" className="bg-slate-800 text-slate-500">Najpierw wybierz grupę docelową</option>
+            ) : (
+              REPORT_TYPES[selectedGroup]?.map((t) => (
+                <option key={t} value={t} className="bg-slate-800">
+                  {t}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
