@@ -14,15 +14,16 @@ const REPORT_TYPES: Record<string, string[]> = {
 
 interface ReportFormProps {
   onSuccess?: () => void;
+  userNick?: string | null;
 }
 
-export function ReportForm({ onSuccess }: ReportFormProps) {
+export function ReportForm({ onSuccess, userNick }: ReportFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [nickInput, setNickInput] = useState('');
-  const [avatarNick, setAvatarNick] = useState('');
+  const [nickInput, setNickInput] = useState(userNick ?? '');
+  const [avatarNick, setAvatarNick] = useState(userNick ?? '');
 
   // Debounce avatar update by 600ms
   useEffect(() => {
@@ -44,8 +45,10 @@ export function ReportForm({ onSuccess }: ReportFormProps) {
         setResult({ type: 'success', message: 'Zgłoszenie zostało wysłane pomyślnie!' });
         formRef.current?.reset();
         setSelectedGroup(null);
-        setNickInput('');
-        setAvatarNick('');
+        if (!userNick) {
+          setNickInput('');
+          setAvatarNick('');
+        }
         onSuccess?.();
       }
     });
@@ -74,8 +77,13 @@ export function ReportForm({ onSuccess }: ReportFormProps) {
               required
               placeholder="NocnySzczerbatek"
               value={nickInput}
-              onChange={(e) => setNickInput(e.target.value)}
-              className="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-colors"
+              onChange={(e) => !userNick && setNickInput(e.target.value)}
+              readOnly={!!userNick}
+              className={`w-full bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 text-sm focus:outline-none transition-colors ${
+                userNick
+                  ? 'opacity-70 cursor-not-allowed'
+                  : 'focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50'
+              }`}
             />
           </div>
         </div>

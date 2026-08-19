@@ -1,9 +1,12 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { createServerSupabase } from '@/lib/supabase-server';
 import { Dashboard } from '@/components/Dashboard';
 import { ReportForm } from '@/components/ReportForm';
 import { MobileFormDrawer } from '@/components/MobileFormDrawer';
+import { UserMenu } from '@/components/UserMenu';
 import type { Report } from '@/types';
-import { Shield, AlertTriangle } from 'lucide-react';
+import { Shield, AlertTriangle, LogIn } from 'lucide-react';
+import Link from 'next/link';
 
 async function getReports(): Promise<Report[]> {
   if (!isSupabaseConfigured) return [];
@@ -25,8 +28,32 @@ async function getReports(): Promise<Report[]> {
   })) ?? [];
 }
 
+interface Profile {
+  id: string;
+  mc_nickname: string;
+  role: string;
+}
+
+async function getCurrentProfile(): Promise<Profile | null> {
+  try {
+    const serverSupabase = await createServerSupabase();
+    const { data: { user } } = await serverSupabase.auth.getUser();
+    if (!user) return null;
+
+    const { data } = await serverSupabase
+      .from('profiles')
+      .select('id, mc_nickname, role')
+      .eq('id', user.id)
+      .single();
+
+    return data as Profile | null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function Home() {
-  const reports = await getReports();
+  const [reports, profile] = await Promise.all([getReports(), getCurrentProfile()]);
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -56,6 +83,18 @@ export default async function Home() {
                 <p className="text-xs text-slate-500 mt-0.5">Zgłoszenia</p>
               </div>
             </div>
+            {/* Auth area */}
+            {profile ? (
+              <UserMenu nick={profile.mc_nickname} role={profile.role} />
+            ) : (
+              <Link
+                href="/auth"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30 transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                Zaloguj się
+              </Link>
+            )}
           </div>
         </header>
 
@@ -69,13 +108,13 @@ export default async function Home() {
 
             {/* Form (right sidebar) – desktop only */}
             <aside className="hidden lg:block lg:sticky lg:top-24">
-              <ReportForm />
+              <ReportForm userNick={profile?.mc_nickname ?? null} />
             </aside>
           </div>
         </main>
 
         {/* Mobile FAB + drawer */}
-        <MobileFormDrawer />
+        <MobileFormDrawer userNick={profile?.mc_nickname ?? null} />
 
         {/* Footer */}
         <footer className="border-t border-slate-800/60 mt-16 py-6 text-center text-slate-600 text-xs">

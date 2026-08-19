@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { ReportForm } from './ReportForm';
 
-export function MobileFormDrawer() {
+interface MobileFormDrawerProps {
+  userNick?: string | null;
+}
+
+export function MobileFormDrawer({ userNick }: MobileFormDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,7 +45,7 @@ export function MobileFormDrawer() {
               </button>
             </div>
             <div className="px-4 pb-8">
-              <ReportForm onSuccess={() => setIsOpen(false)} />
+              <ReportForm onSuccess={() => setIsOpen(false)} userNick={userNick} />
             </div>
           </div>
         </div>
